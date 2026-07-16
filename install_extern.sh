@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-QD_DIR="$SCRIPT_DIR/extern/qd"
+QD_DIR="$SCRIPT_DIR/extern/QD"
 QD_INSTALL_DIR="$SCRIPT_DIR/extern/qd-install"
-TCI_QUAD_DIR="$SCRIPT_DIR/extern/tci_quad"
 
 echo "==> Cleaning extern/ ..."
 rm -rf "$SCRIPT_DIR"/extern/*
