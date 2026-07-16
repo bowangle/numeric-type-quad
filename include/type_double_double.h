@@ -78,16 +78,23 @@ inline dd_real to_dd(T x) {
 }
 
 // Specialization for __int128 / util::i128
-// We explicitly use the double constructor to avoid ambiguity
-// between dd_real(int) and dd_real(double) constructors
+// Converts with ~106-bit precision by decomposing into two doubles.
+// A single double has only 53 bits of mantissa, which would silently
+// discard half the precision dd_real is capable of representing.
+//
+// Approach: hi = nearest double to x; residual = x - int128(hi);
+// then dd_real(hi) + dd_real(residual). QD's addition normalizes the
+// pair, yielding the best double-double approximation of the original
+// integer.
 inline dd_real to_dd(util::i128 x) {
-    // Convert to double first, then construct dd_real
-    // This avoids the ambiguous constructor issue
-    double d = static_cast<double>(x);
-    return dd_real(d);
+    double hi = static_cast<double>(x);
+    dd_real result(hi);
+    util::i128 residual = x - static_cast<util::i128>(hi);
+    result += dd_real(static_cast<double>(residual));
+    return result;
 }
 
-// Direct conversion from int128 to double-double
+// Convenience alias (same as to_dd, explicit name for discoverability)
 inline dd_real dd_from_i128_type(util::i128 x) {
     return to_dd(x);
 }
