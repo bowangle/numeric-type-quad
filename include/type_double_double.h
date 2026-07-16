@@ -41,6 +41,13 @@
 #include <Eigen/Core>
 #include <type_traits>
 #include <cstddef>
+#include <limits>
+#include <cstdint>
+
+// Forward declaration for int128 type
+namespace util {
+    using i128 = __int128;
+}
 
 using dd_128 = dd_real;
 using Cdd_128 = std::complex<dd_128>;
@@ -68,6 +75,21 @@ inline dd_real dd_from_size(std::size_t x) {
 template <typename T>
 inline dd_real to_dd(T x) {
     return dd_real(static_cast<double>(x));
+}
+
+// Specialization for __int128 / util::i128
+// We explicitly use the double constructor to avoid ambiguity
+// between dd_real(int) and dd_real(double) constructors
+inline dd_real to_dd(util::i128 x) {
+    // Convert to double first, then construct dd_real
+    // This avoids the ambiguous constructor issue
+    double d = static_cast<double>(x);
+    return dd_real(d);
+}
+
+// Direct conversion from int128 to double-double
+inline dd_real dd_from_i128_type(util::i128 x) {
+    return to_dd(x);
 }
 
 // ============================================================
