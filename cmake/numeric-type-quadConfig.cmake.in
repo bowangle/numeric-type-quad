@@ -1,0 +1,13 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+
+# Our library target
+include("${CMAKE_CURRENT_LIST_DIR}/numeric-type-quadTargets.cmake")
+
+# Mark as found
+set(numeric-type-quad_FOUND TRUE)
+set(numeric_type_quad_FOUND TRUE)
+
+# Compatibility aliases
+set(TCIcpp_FOUND TRUE)
