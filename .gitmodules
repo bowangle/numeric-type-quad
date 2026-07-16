@@ -1,0 +1,8 @@
+[submodule "extern/QD"]
+	path = extern/QD
+	url = https://github.com/BL-highprecision/QD.git
+	ignore = dirty
+[submodule "extern/eigen"]
+	path = extern/eigen
+	url = https://gitlab.com/libeigen/eigen.git
+	ignore = dirty
