@@ -81,6 +81,98 @@ struct dd_128 : dd_real {
 using Cdd_128 = std::complex<dd_128>;
 
 // ============================================================
+// 0c. CLOSED ARITHMETIC FOR dd_128
+// ------------------------------------------------------------
+// Without these, dd_128 op dd_128 resolves to the inherited
+// dd_real operators and yields dd_real. In assignment contexts
+// the dd_128(const dd_real&) constructor hides this, but any
+// common-type deduction (?:, auto, template deduction) inside
+// Eigen then sees two different, mutually convertible types and
+// fails (e.g. RankRevealingBase::threshold()).
+//
+// For two dd_128 arguments these overloads are exact matches,
+// so they always beat the inherited dd_real operators (which
+// need a derived-to-base conversion). The static_casts inside
+// the bodies force resolution to the base operators, preventing
+// infinite recursion. Compound assignments (+=, ...) and
+// comparisons are inherited unchanged: they mutate in place or
+// return bool, so no type leaks out.
+// ============================================================
+#define DD128_BINOP(op)                                                        \
+    inline dd_128 operator op (const dd_128& a, const dd_128& b) {             \
+        return dd_128(static_cast<const dd_real&>(a) op                        \
+                      static_cast<const dd_real&>(b));                         \
+    }                                                                          \
+    inline dd_128 operator op (const dd_128& a, double b) {                    \
+        return dd_128(static_cast<const dd_real&>(a) op b);                    \
+    }                                                                          \
+    inline dd_128 operator op (double a, const dd_128& b) {                    \
+        return dd_128(a op static_cast<const dd_real&>(b));                    \
+    }
+
+DD128_BINOP(+)
+DD128_BINOP(-)
+DD128_BINOP(*)
+DD128_BINOP(/)
+#undef DD128_BINOP
+
+inline dd_128 operator-(const dd_128& a) {
+    return dd_128(-static_cast<const dd_real&>(a));
+}
+inline dd_128 operator+(const dd_128& a) { return a; }
+
+// ============================================================
+// 0d. CLOSED MATH FUNCTIONS FOR dd_128
+// ------------------------------------------------------------
+// Same issue as the operators: sqrt(dd_128) etc. would otherwise
+// return dd_real. Eigen's numext wrappers find these via ADL
+// (dd_128 lives in the global namespace, as do these overloads),
+// and norms / Householder / Jacobi paths rely on the result type
+// matching RealScalar exactly.
+// ============================================================
+#define DD128_UNARY_FN(fn)                                                     \
+    inline dd_128 fn(const dd_128& a) {                                        \
+        return dd_128(fn(static_cast<const dd_real&>(a)));                     \
+    }
+
+DD128_UNARY_FN(sqrt)
+DD128_UNARY_FN(abs)
+DD128_UNARY_FN(fabs)
+DD128_UNARY_FN(floor)
+DD128_UNARY_FN(ceil)
+DD128_UNARY_FN(exp)
+DD128_UNARY_FN(log)
+DD128_UNARY_FN(log10)
+DD128_UNARY_FN(sin)
+DD128_UNARY_FN(cos)
+DD128_UNARY_FN(tan)
+DD128_UNARY_FN(asin)
+DD128_UNARY_FN(acos)
+DD128_UNARY_FN(atan)
+DD128_UNARY_FN(sinh)
+DD128_UNARY_FN(cosh)
+DD128_UNARY_FN(tanh)
+#undef DD128_UNARY_FN
+
+inline dd_128 pow(const dd_128& a, const dd_128& b) {
+    return dd_128(pow(static_cast<const dd_real&>(a),
+                      static_cast<const dd_real&>(b)));
+}
+inline dd_128 pow(const dd_128& a, int b) {
+    return dd_128(pow(static_cast<const dd_real&>(a), b));
+}
+inline dd_128 atan2(const dd_128& a, const dd_128& b) {
+    return dd_128(atan2(static_cast<const dd_real&>(a),
+                        static_cast<const dd_real&>(b)));
+}
+inline dd_128 fmod(const dd_128& a, const dd_128& b) {
+    return dd_128(fmod(static_cast<const dd_real&>(a),
+                       static_cast<const dd_real&>(b)));
+}
+// hypot(dd_128, dd_128): forwards to the dd_real hypot defined
+// in section 1 below; declared after it via the trailing overload.
+
+// ============================================================
 // llround for dd_real / dd_128 (found via ADL from grid.h)
 // ------------------------------------------------------------
 // Returns util::i128 rather than long long so the same overload
@@ -93,6 +185,10 @@ using Cdd_128 = std::complex<dd_128>;
 // Rounds half away from zero, matching std::llround. The result
 // is rebuilt from BOTH components of the double-double, so it is
 // exact above 2^53 where llround(to_double(x)) would not be.
+//
+// Takes const dd_real&, so dd_128 arguments bind via the base —
+// no separate dd_128 overload needed (the return type is an
+// integer, so no dd_real can leak out).
 // ============================================================
 inline util::i128 llround(const dd_real& v) {
     // round to nearest, ties away from zero
@@ -116,6 +212,11 @@ inline dd_real hypot(const dd_real& a, const dd_real& b) {
     dd_real lo = (ax > ay) ? ay : ax;
     dd_real r = lo / hi;
     return hi * sqrt(dd_real(1.0) + r * r);
+}
+
+inline dd_128 hypot(const dd_128& a, const dd_128& b) {
+    return dd_128(hypot(static_cast<const dd_real&>(a),
+                        static_cast<const dd_real&>(b)));
 }
 
 // ============================================================
