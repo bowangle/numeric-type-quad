@@ -78,7 +78,7 @@ int main() {
     std::cout << "\n--- Mixed Type Operations ---\n";
     
     // Convert int128 to double-double using our conversion function
-    dd_128 dd_from_i128 = dd_from_i128_type(i128_val);
+    dd_128 dd_from_i128 = dd_128(i128_val);
     std::cout << "dd_128 from i128: " << dd_from_i128 << "\n";
     
     // Also test the template version
