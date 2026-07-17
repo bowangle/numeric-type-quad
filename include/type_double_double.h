@@ -43,11 +43,7 @@
 #include <cstddef>
 #include <limits>
 #include <cstdint>
-
-// Forward declaration for int128 type
-namespace util {
-    using i128 = __int128;
-}
+#include "type_int128.h"
 
 using dd_128 = dd_real;
 using Cdd_128 = std::complex<dd_128>;
