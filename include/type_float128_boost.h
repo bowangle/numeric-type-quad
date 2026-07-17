@@ -2,6 +2,8 @@
 #include <boost/multiprecision/float128.hpp>
 #include <Eigen/Dense>
 
+#include "type_int128.h"
+
 using float128 = boost::multiprecision::float128;
 using Cfloat128   = std::complex<float128>;
 using MatrixX128 = Eigen::Matrix<Cfloat128, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
