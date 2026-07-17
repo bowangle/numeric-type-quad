@@ -81,6 +81,31 @@ struct dd_128 : dd_real {
 using Cdd_128 = std::complex<dd_128>;
 
 // ============================================================
+// llround for dd_real / dd_128 (found via ADL from grid.h)
+// ------------------------------------------------------------
+// Returns util::i128 rather than long long so the same overload
+// serves QTGrid<dd_128, int>, <dd_128, long long> and
+// <dd_128, __int128>: grid.h's static_cast<Sint>(...) narrows
+// as needed. Crucially, i128 also holds 2^63 (Sint = i128,
+// nBits = 63, x == b) which would overflow a long long *before*
+// the k == N clamp in coord_to_id.
+//
+// Rounds half away from zero, matching std::llround. The result
+// is rebuilt from BOTH components of the double-double, so it is
+// exact above 2^53 where llround(to_double(x)) would not be.
+// ============================================================
+inline util::i128 llround(const dd_real& v) {
+    // round to nearest, ties away from zero
+    dd_real r = (v < dd_real(0.0)) ? ceil(v - dd_real(0.5))
+                                   : floor(v + dd_real(0.5));
+
+    // r is integer-valued, so both normalized components are
+    // integer-valued doubles; each converts to i128 exactly and
+    // their sum reconstructs r exactly (up to ~2^106).
+    return static_cast<util::i128>(r.x[0]) + static_cast<util::i128>(r.x[1]);
+}
+
+// ============================================================
 // 1. MATH SUPPORT (Eigen ADL)
 // ============================================================
 inline dd_real hypot(const dd_real& a, const dd_real& b) {
