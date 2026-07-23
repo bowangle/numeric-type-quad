@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <complex>
 
 // Include your type headers
@@ -90,7 +91,30 @@ int main() {
     std::cout << "float128 from i128: " << f128_from_i128 << "\n";
 
     // ============================================================
-    // 5. EDGE CASES
+    // 5. pi() SPECIALISATIONS
+    // ============================================================
+    std::cout << "\n--- pi() ---\n";
+
+    double        p_d  = pi<double>();
+    dd_128        p_dd = pi<dd_128>();
+    float128      p_f8 = pi<float128>();
+
+    std::cout << std::setprecision(34);
+    std::cout << "pi<double>:   " << p_d  << "\n";
+    std::cout << "pi<dd_128>:   " << p_dd << "\n";
+    std::cout << "pi<float128>: " << p_f8 << "\n";
+
+    // rough sanity — all should be in [3.14, 3.15]
+    if (p_d < 3.14 || p_d > 3.15 ||
+        p_dd < dd_128(3.14) || p_dd > dd_128(3.15) ||
+        p_f8 < float128(3.14) || p_f8 > float128(3.15)) {
+        std::cerr << "FAIL: pi() out of range\n";
+        return 1;
+    }
+    std::cout << "pi() sanity check passed\n";
+
+    // ============================================================
+    // 6. EDGE CASES
     // ============================================================
     std::cout << "\n--- Edge Cases ---\n";
     

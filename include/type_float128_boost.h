@@ -1,4 +1,5 @@
 #pragma once
+#include "pi.h"
 #include <boost/multiprecision/float128.hpp>
 #include <Eigen/Dense>
 
@@ -27,3 +28,8 @@ inline util::i128 llround(const float128& v) {
        // so the conversion is exact for integer-valued r (up to ~2^113).                 
        return static_cast<util::i128>(r);                                                 
    }         
+
+// ============================================================
+// pi() SPECIALISATION
+// ============================================================
+template<> inline float128 pi<float128>() { return boost::math::constants::pi<float128>(); }
