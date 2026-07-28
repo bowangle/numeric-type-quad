@@ -60,14 +60,14 @@ inline dd_real to_dd(unsigned long long x) { return to_dd(static_cast<util::i128
 // ============================================================
 struct dd_128 : dd_real {
     dd_128() : dd_real() {}
-    dd_128(const dd_real& v) : dd_real(v) {}      // ops return dd_real -> back to dd_128
-    dd_128(double v)             : dd_real(v) {}
-    dd_128(int v)                : dd_real(v) {}
-    dd_128(long v)               : dd_real(to_dd(v)) {}
-    dd_128(long long v)          : dd_real(to_dd(v)) {}
-    dd_128(unsigned long v)      : dd_real(to_dd(v)) {}
-    dd_128(unsigned long long v) : dd_real(to_dd(v)) {}
-    dd_128(util::i128 v)         : dd_real(to_dd(v)) {}   // <- the fix for line 150
+    dd_128(const dd_real& v) : dd_real(v) {}
+    dd_128(double v)         : dd_real(v) {}
+
+    // exact match for every integer type -> no ambiguity with dd_128(double)
+    template<class I, std::enable_if_t<std::is_integral_v<I>, int> = 0>
+    dd_128(I v) : dd_real(to_dd(static_cast<util::i128>(v))) {}
+
+    dd_128(util::i128 v) : dd_real(to_dd(v)) {}
 };
 using Cdd_128 = std::complex<dd_128>;
 // ============================================================
