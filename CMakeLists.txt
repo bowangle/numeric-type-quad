@@ -36,6 +36,8 @@ if(NUMERIC_TYPE_BUILD_TESTS)
     foreach(name type library)
         add_executable(numeric_type_test_${name} test/test_${name}.cpp)
         target_link_libraries(numeric_type_test_${name} PRIVATE numeric_type_quad)
+        target_compile_options(numeric_type_test_${name} PRIVATE
+            "$<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall;-Wextra;-Wreorder;-Wshadow;-UNDEBUG>")
         add_test(NAME numeric_type_${name} COMMAND numeric_type_test_${name})
     endforeach()
 endif()

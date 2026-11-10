@@ -36,6 +36,12 @@ CMake, for example `-DCMAKE_INSTALL_PREFIX=/path/to/install`. The environment
 variables `BUILD_DIR`, `BUILD_JOBS`, and `INSTALL_PREFIX` can also be overridden.
 The script stops on failure and does not automatically run tests.
 
+Release builds through the scripts use `-O3 -march=native`. Tests additionally
+use `-Wall -Wextra -Wreorder -Wshadow -UNDEBUG`, keeping assertions enabled.
+Library objects retain `-fPIC` for use in shared libraries or Python extensions.
+These settings match QTgrid. `-march=native` targets the build machine's CPU;
+binaries may not run on older CPUs.
+
 Run the already compiled tests without rebuilding:
 
 ```sh
@@ -53,6 +59,7 @@ Or run the individual steps:
 ```sh
 cmake -S numeric-type-quad -B build/numeric-type-quad \
   -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native" \
   -DCMAKE_INSTALL_PREFIX="$PWD/install" \
   -DNUMERIC_TYPE_BUILD_TESTS=ON
 cmake --build build/numeric-type-quad --parallel 2

@@ -6,5 +6,7 @@ BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build}"
 
 # Extra arguments are CMake configuration arguments, e.g.:
 # ./compile.sh -DNUMERIC_TYPE_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/path/to/install
-cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release "$@"
+cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native" "$@"
 cmake --build "$BUILD_DIR" --parallel "${BUILD_JOBS:-2}"
