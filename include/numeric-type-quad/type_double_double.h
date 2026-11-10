@@ -1,5 +1,5 @@
 #pragma once
-#include "pi.h"
+#include <numeric-type-quad/pi.h>
 // ============================================================
 // -1. EIGEN INDEX TYPE
 // ============================================================
@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <limits>
 #include <cstdint>
-#include "type_int128.h"
+#include <numeric-type-quad/type_int128.h>
 // ============================================================
 // 0. EXACT INTEGER -> dd_real CONVERSIONS (implementation)
 // ============================================================

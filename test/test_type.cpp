@@ -3,9 +3,9 @@
 #include <complex>
 
 // Include your type headers
-#include "type_double_double.h"
-#include "type_float128_boost.h"
-#include "type_int128.h"
+#include <numeric-type-quad/type_double_double.h>
+#include <numeric-type-quad/type_float128_boost.h>
+#include <numeric-type-quad/type_int128.h>
 
 int main() {
     std::cout << "=== Testing Numeric Type Instantiation ===\n\n";

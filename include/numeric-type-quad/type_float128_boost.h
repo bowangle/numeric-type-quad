@@ -1,11 +1,11 @@
 #pragma once
-#include "pi.h"
+#include <numeric-type-quad/pi.h>
 #include <boost/multiprecision/float128.hpp>
 #include <complex>
 #include <ostream>
 #include <Eigen/Dense>
 
-#include "type_int128.h"
+#include <numeric-type-quad/type_int128.h>
 
 using float128 = boost::multiprecision::float128;
 using Cfloat128   = std::complex<float128>;

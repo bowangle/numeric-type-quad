@@ -3,16 +3,17 @@ project(numeric-type-quad VERSION 0.1.0 LANGUAGES CXX)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 
-# Boost is system-provided; Eigen and the already-built QD come from extern/.
+# Boost is system-provided; Eigen comes from extern/, QD from the local install/.
 find_package(Boost REQUIRED)
 set(NUMERIC_TYPE_EXTERN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../extern"
-    CACHE PATH "Shared Eigen and QD dependencies")
+    CACHE PATH "Shared external sources (Eigen)")
+set(QD_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../install"
+    CACHE PATH "Installed QD prefix")
 find_path(EIGEN_INCLUDE_DIR Eigen/Core PATHS "${NUMERIC_TYPE_EXTERN_DIR}/eigen"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
-find_path(QD_INCLUDE_DIR qd/dd_real.h PATHS "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/include"
+find_path(QD_INCLUDE_DIR qd/dd_real.h PATHS "${QD_ROOT}/include"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
-find_library(QD_LIBRARY NAMES qd PATHS
-    "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/lib" "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/lib64"
+find_library(QD_LIBRARY NAMES qd PATHS "${QD_ROOT}/lib" "${QD_ROOT}/lib64"
     NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
 option(BUILD_SHARED_LIBS "Build shared instead of static libraries" OFF)
@@ -44,7 +45,7 @@ install(TARGETS numeric_type_quad EXPORT numeric-type-quadTargets
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+install(DIRECTORY include/numeric-type-quad DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 set(package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/numeric-type-quad")
 install(EXPORT numeric-type-quadTargets
     NAMESPACE numeric_type_quad:: DESTINATION "${package_dir}")

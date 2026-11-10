@@ -1,4 +1,4 @@
-#include "type_double_double.h"
+#include <numeric-type-quad/type_double_double.h>
 
 // dd_128 itself is concrete, not a class template. Instantiate its templated
 // integer constructors and its complex wrapper, not the scalar type itself.

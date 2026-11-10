@@ -8,18 +8,17 @@ Standalone C++20 library for `dd_128`, Boost `float128`, their complex wrappers,
 Boost headers are loaded from the system using `find_package(Boost REQUIRED)`.
 No compiled Boost libraries are needed.
 
-Eigen headers and QD binaries are loaded only from the shared repository
-`extern/` directory (one level above this project):
+Eigen headers come from the shared `extern/` sources. QD headers and binaries
+come from the repository's local `install/` prefix:
 
 ```text
-extern/
-  eigen/Eigen/Core
-  qd-install/include/qd/dd_real.h
-  qd-install/lib/libqd.so       # or libqd.a / lib64/
+extern/eigen/Eigen/Core
+install/include/qd/dd_real.h
+install/lib/libqd.so          # or libqd.a / lib64/
 ```
 
-QD must already be built and installed into `extern/qd-install/`; this project
-will not build or download any dependencies. A GCC-compatible compiler with
+Install QD once with `bash script/install-qd.sh` before building this layer.
+This project will not build or download any dependencies. A GCC-compatible compiler with
 `__int128`, `__float128`, and the quadmath runtime is required. The quadmath
 runtime, like the C++ standard library, comes from the compiler toolchain.
 
@@ -61,11 +60,25 @@ ctest --test-dir build/numeric-type-quad --output-on-failure
 cmake --install build/numeric-type-quad
 ```
 
-Use `-DNUMERIC_TYPE_EXTERN_DIR=/absolute/path/to/extern` to override the external
-root, `-DNUMERIC_TYPE_BUILD_TESTS=OFF` to skip tests, or
+Use `-DNUMERIC_TYPE_EXTERN_DIR=/absolute/path/to/extern` to override the Eigen
+source root, `-DQD_ROOT=/absolute/path/to/install` to select another QD
+installation, `-DNUMERIC_TYPE_BUILD_TESTS=OFF` to skip tests, or
 `-DBUILD_SHARED_LIBS=ON` to build a shared rather than static library.
+`QD_ROOT` is independent of `CMAKE_INSTALL_PREFIX`, which selects where the
+numeric library itself is installed.
 
 ## Consume without rebuilding
+
+Public headers live in `include/numeric-type-quad/` in the source tree and
+`install/include/numeric-type-quad/` after installation. Include them using the
+library prefix to avoid collisions with other libraries:
+
+```cpp
+#include <numeric-type-quad/type_double_double.h>
+#include <numeric-type-quad/type_float128_boost.h>
+#include <numeric-type-quad/type_int128.h>
+#include <numeric-type-quad/pi.h>
+```
 
 In a higher layer's `CMakeLists.txt`:
 
@@ -77,7 +90,7 @@ target_link_libraries(my_library PUBLIC numeric_type_quad::numeric_type_quad)
 Configure that layer with `-DCMAKE_PREFIX_PATH=/absolute/path/to/install`.
 The installed target records the configured Eigen/QD include and library paths.
 If those dependencies move, reconfigure numeric-type-quad with the new
-`NUMERIC_TYPE_EXTERN_DIR` and reinstall it. The install prefix is not
+`NUMERIC_TYPE_EXTERN_DIR` and/or `QD_ROOT` and reinstall it. The install prefix is not
 self-contained: external dependencies must remain available. No source checkout
 of numeric-type-quad is needed by consumers.
 
