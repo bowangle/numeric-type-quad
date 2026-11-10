@@ -69,7 +69,16 @@ struct dd_128 : dd_real {
 
     dd_128(util::i128 v) : dd_real(to_dd(v)) {}
 };
+// Common constructor instantiations are supplied by the compiled library.
+extern template dd_128::dd_128(int);
+extern template dd_128::dd_128(unsigned int);
+extern template dd_128::dd_128(long);
+extern template dd_128::dd_128(unsigned long);
+extern template dd_128::dd_128(long long);
+extern template dd_128::dd_128(unsigned long long);
+
 using Cdd_128 = std::complex<dd_128>;
+extern template class std::complex<dd_128>;
 // ============================================================
 // 0b'. std::numeric_limits<dd_128>
 // ------------------------------------------------------------
@@ -217,7 +226,7 @@ inline util::i128 llround(const dd_real& v) {
 // ============================================================
 // pi() SPECIALISATION
 // ============================================================
-template<> inline dd_128 pi<dd_128>() { return dd_real::_pi; }
+template<> dd_128 pi<dd_128>();
 // ============================================================
 // 1. MATH SUPPORT (Eigen ADL)
 // ============================================================

@@ -1,79 +1,62 @@
 cmake_minimum_required(VERSION 3.21)
-project(numeric-type-quad LANGUAGES CXX)
+project(numeric-type-quad VERSION 0.1.0 LANGUAGES CXX)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-# Only meaningful for the developer configuring this layer directly;
-# the top-level project sets it for the whole tree.
-if(PROJECT_IS_TOP_LEVEL)
-    set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-endif()
+# Boost is system-provided; Eigen and the already-built QD come from extern/.
+find_package(Boost REQUIRED)
+set(NUMERIC_TYPE_EXTERN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../extern"
+    CACHE PATH "Shared Eigen and QD dependencies")
+find_path(EIGEN_INCLUDE_DIR Eigen/Core PATHS "${NUMERIC_TYPE_EXTERN_DIR}/eigen"
+    NO_DEFAULT_PATH NO_CACHE REQUIRED)
+find_path(QD_INCLUDE_DIR qd/dd_real.h PATHS "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/include"
+    NO_DEFAULT_PATH NO_CACHE REQUIRED)
+find_library(QD_LIBRARY NAMES qd PATHS
+    "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/lib" "${NUMERIC_TYPE_EXTERN_DIR}/qd-install/lib64"
+    NO_DEFAULT_PATH NO_CACHE REQUIRED)
 
-option(NUMERIC_TYPE_BUILD_TESTS
-       "Build numeric-type-quad's own tests"
-       ${PROJECT_IS_TOP_LEVEL})
+option(BUILD_SHARED_LIBS "Build shared instead of static libraries" OFF)
+option(NUMERIC_TYPE_BUILD_TESTS "Build numeric tests" ${PROJECT_IS_TOP_LEVEL})
+add_library(numeric_type_quad
+    src/type_double_double.cpp src/type_float128_boost.cpp src/type_int128.cpp src/pi.cpp)
+add_library(numeric_type_quad::numeric_type_quad ALIAS numeric_type_quad)
+set_target_properties(numeric_type_quad PROPERTIES
+    POSITION_INDEPENDENT_CODE ON INSTALL_RPATH_USE_LINK_PATH TRUE)
+target_compile_features(numeric_type_quad PUBLIC cxx_std_20)
+target_compile_definitions(numeric_type_quad PUBLIC EIGEN_DEFAULT_DENSE_INDEX_TYPE=int)
+target_include_directories(numeric_type_quad PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
+target_include_directories(numeric_type_quad SYSTEM PUBLIC ${EIGEN_INCLUDE_DIR} ${QD_INCLUDE_DIR})
+target_link_libraries(numeric_type_quad PUBLIC Boost::headers "${QD_LIBRARY}" quadmath)
 
-# ---- own paths ----------------------------------------------------------------
-set(PROJECT_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(EIGEN_INCLUDE_DIR   ${CMAKE_CURRENT_SOURCE_DIR}/extern/eigen)
-set(QD_INCLUDE_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/extern/qd-install/include)
-set(QD_LIBRARY_DIR      ${CMAKE_CURRENT_SOURCE_DIR}/extern/qd-install/lib)
-
-# ---- sanity checks: externals must be present --------------------------------
-if(NOT EXISTS ${QD_INCLUDE_DIR}/qd/qd_real.h)
-    message(FATAL_ERROR
-        "QD not found at ${QD_INCLUDE_DIR}.\n"
-        "Run ${CMAKE_CURRENT_SOURCE_DIR}/install_extern.sh first "
-        "to build the QD library.")
-endif()
-
-if(NOT EXISTS ${EIGEN_INCLUDE_DIR}/Eigen/Core)
-    message(FATAL_ERROR
-        "Eigen not found at ${EIGEN_INCLUDE_DIR}.\n"
-        "Run: git submodule update --init --recursive")
-endif()
-
-# ---- imported target for QD ---------------------------------------------------
-# NO_DEFAULT_PATH so we can never silently pick up a system libqd that
-# disagrees with the headers above. GLOBAL so consumers two or three
-# add_subdirectory() levels up can still see qd::qd.
-find_library(QD_LIBRARY
-    NAMES qd
-    PATHS ${QD_LIBRARY_DIR}
-    NO_DEFAULT_PATH
-    REQUIRED)
-
-add_library(qd::qd UNKNOWN IMPORTED GLOBAL)
-set_target_properties(qd::qd PROPERTIES
-    IMPORTED_LOCATION             "${QD_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${QD_INCLUDE_DIR}")
-
-# ---- interface target: carries our headers + transitive deps ------------------
-add_library(numeric_type_deps INTERFACE)
-
-target_include_directories(numeric_type_deps INTERFACE
-    ${PROJECT_INCLUDE_DIR})
-
-# SYSTEM => -isystem, so Eigen's own warnings don't pollute consumers
-# built with -Wall -Wextra. (qd::qd's includes are already treated as
-# SYSTEM because it is an imported target.)
-target_include_directories(numeric_type_deps SYSTEM INTERFACE
-    ${EIGEN_INCLUDE_DIR})
-
-target_compile_features(numeric_type_deps INTERFACE cxx_std_20)
-
-target_link_libraries(numeric_type_deps INTERFACE qd::qd)
-
-if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(numeric_type_deps INTERFACE quadmath)
-endif()
-
-# ---- tests (leaf targets: nothing may ever depend on these) -------------------
 if(NUMERIC_TYPE_BUILD_TESTS)
     enable_testing()
-
-    add_executable(numeric_type_test test/test_type.cpp)
-    target_link_libraries(numeric_type_test PRIVATE numeric_type_deps)
-    target_compile_options(numeric_type_test PRIVATE
-        -Wall -Wextra -Wreorder -Wshadow)
-
-    add_test(NAME numeric_type_test COMMAND numeric_type_test)
+    foreach(name type library)
+        add_executable(numeric_type_test_${name} test/test_${name}.cpp)
+        target_link_libraries(numeric_type_test_${name} PRIVATE numeric_type_quad)
+        add_test(NAME numeric_type_${name} COMMAND numeric_type_test_${name})
+    endforeach()
 endif()
+
+# Install the library, headers, and package consumed by higher layers.
+install(TARGETS numeric_type_quad EXPORT numeric-type-quadTargets
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+set(package_dir "${CMAKE_INSTALL_LIBDIR}/cmake/numeric-type-quad")
+install(EXPORT numeric-type-quadTargets
+    NAMESPACE numeric_type_quad:: DESTINATION "${package_dir}")
+file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/numeric-type-quadConfig.cmake" [=[
+include(CMakeFindDependencyMacro)
+find_dependency(Boost)
+include("${CMAKE_CURRENT_LIST_DIR}/numeric-type-quadTargets.cmake")
+]=])
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/numeric-type-quadConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION} COMPATIBILITY SameMajorVersion)
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/numeric-type-quadConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/numeric-type-quadConfigVersion.cmake"
+    DESTINATION "${package_dir}")

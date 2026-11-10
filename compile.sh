@@ -1,19 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -euo pipefail
 
-# Paths
-PROJECT_ROOT=$(pwd)
-BUILD_DIR="$PROJECT_ROOT/build"
+PROJECT_ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+BUILD_DIR="${BUILD_DIR:-$PROJECT_ROOT/build}"
 
-# Clean old build
-# rm -rf "$BUILD_DIR"
-
-# Configure CMake (out-of-source build)
-cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_CXX_FLAGS_RELEASE="-O3 -march=native" \
-    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
-
-# Build everything
-cmake --build "$BUILD_DIR" -j 2
-
-cat build/CMakeCache.txt | grep CMAKE_CXX_COMPILER
+# Extra arguments are CMake configuration arguments, e.g.:
+# ./compile.sh -DNUMERIC_TYPE_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/path/to/install
+cmake -S "$PROJECT_ROOT" -B "$BUILD_DIR" -DCMAKE_BUILD_TYPE=Release "$@"
+cmake --build "$BUILD_DIR" --parallel "${BUILD_JOBS:-2}"

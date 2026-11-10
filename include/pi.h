@@ -8,4 +8,4 @@ Real pi() {
     return Real(0);
 }
 
-template<> inline double pi<double>() { return M_PI; }
+template<> double pi<double>();
